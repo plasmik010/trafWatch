@@ -62,16 +62,20 @@ class Conf:
               self.thresh = True
 
     def getEnvValues(self):
-        def getEnvParam(name, classmember):
-            envValue = os.environ.get(name, None)
+        def getEnvParam(envName, classmemberName):
+            if not hasattr(self, classmemberName):
+                print(f"Bad code! No attribute {classmemberName} in class!")
+                sys.exit(1)
+            envValue = os.environ.get(envName, None)
             if envValue:
-                classmember = envValue
+                # It is python..
+                setattr(self, classmemberName, envValue)
                 return 1
             return 0
-        getEnvParam("trafWatchBaseUrl", self.baseUrl)
-        getEnvParam("restUser", self.restapiUser)
-        getEnvParam("restPassword", self.restapiPassword)
-        getEnvParam("botToken", self.botToken)
+        getEnvParam("trafWatchBaseUrl", "baseUrl")
+        getEnvParam("restUser", "restapiUser")
+        getEnvParam("restPassword", "restapiPassword")
+        getEnvParam("botToken", "botToken")
         # e = os.environ.get("trafWatchBaseUrl", None)
         # if e: self.baseUrl = e
     def showAll(self):
