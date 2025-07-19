@@ -1,4 +1,7 @@
 
+# Possible call example:
+$ python main.py -d 1 -t 500
+
 # Possible config files example:
 
 config.toml:

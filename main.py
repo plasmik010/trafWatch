@@ -17,11 +17,20 @@ class Conf:
         self.botToken = ""
         self.restapiUser = ""
         self.restapiPassword = ""
+        self.dtl = None
+        self.thresh = None
+        self.noDisturb = None
+        # self.dtl = Per.ThreeHour
+        # self.thresh = 100
+        # self.noDisturb = False
     def eval(self):
+        # Every next input has higher merit
         self.readToml(CONFIGFILE_COMMON)
         self.readToml(CONFIGFILE_SECRET)
-        self.getCliArgs(sys.argv[1:])
         self.getEnvValues()
+        self.getCliArgs(sys.argv[1:])
+    def oneShotParamsReady(self):
+        return (self.dtl and self.thresh)
     def readToml(self, fname:str):
         global DEBUG
         with open(fname, "rb") as f:
@@ -37,7 +46,7 @@ class Conf:
                 DEBUG = tomlTable["Debug"]
     def getCliArgs(self, argv):
        try:
-          opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
+          opts, args = getopt.getopt(argv, "hd:t:q", ["detail=", "thresh=", "semi-quiet"])
        except getopt.GetoptError:
           print ('Bad invocation')
           sys.exit(2)
@@ -45,14 +54,26 @@ class Conf:
           if opt == '-h':
              print ("NO HELP! ha-ha")
              sys.exit()
-          elif opt in ("-i", "--ifile"):
-             print("now know i-file")
-          elif opt in ("-o", "--ofile"):
-             print("now know o-file")
+          elif opt in ("-d", "--detail"):
+              self.dtl = arg
+          elif opt in ("-t", "--thresh"):
+              self.thresh = arg
+          elif opt in ("-q", "--semi-quiet"):
+              self.thresh = True
+
     def getEnvValues(self):
-        # Env has priority
-        envApiKey = os.environ.get('trafWatchBaseUrl', None)
-        if envApiKey: self.baseUrl = envApiKey
+        def getEnvParam(name, classmember):
+            envValue = os.environ.get(name, None)
+            if envValue:
+                classmember = envValue
+                return 1
+            return 0
+        getEnvParam("trafWatchBaseUrl", self.baseUrl)
+        getEnvParam("restUser", self.restapiUser)
+        getEnvParam("restPassword", self.restapiPassword)
+        getEnvParam("botToken", self.botToken)
+        # e = os.environ.get("trafWatchBaseUrl", None)
+        # if e: self.baseUrl = e
     def showAll(self):
         print("\nCurrent params:")
         for name, value in self.__dict__.items():
@@ -112,7 +133,7 @@ class App:
             print("got special entry", j)
             # mac =  f"{j["type"]}_{trafRecord.incNonamers()}"
             mac =  f"{j["type"]}"
-        t = self.records.get(mac)
+        t:trafRecord|None = self.records.get(mac)
         name = j.get("name") or j["type"]
         if not t:
             t = trafRecord(mac, name)
@@ -185,6 +206,7 @@ class Teleg:
 if __name__ == "__main__":
     conf = Conf()
     conf.eval()
+    print(f"Debug is {DEBUG}")
     if DEBUG: conf.showAll()
 
     app = App()
@@ -193,11 +215,18 @@ if __name__ == "__main__":
 
     if DEBUG: teleg.clear() # Prevent bot send message
 
-    app.report(Per.OneHour, 500, True)
-    app.report(Per.ThreeHour, 300)
-    app.report(Per.OneDay, 900)
+    if DEBUG:
+        app.report(Per.OneHour, 500, True)
+        app.report(Per.ThreeHour, 300)
+        app.report(Per.OneDay, 900)
+        sys.exit()
 
-    sys.exit(0)
+    if conf.oneShotParamsReady():
+        app.report(conf.dtl, conf.thresh, conf.noDisturb or False)
+        sys.exit(0)
+    else:
+        print("Error. Detail level and threshold value are necessary!")
+        sys.exit(1)
 
     # exCode:int = not ok
     # sys.exit(exCode) # exit with 0 if Ok
