@@ -35,10 +35,11 @@ class Conf:
         global DEBUG
         with open(fname, "rb") as f:
             tomlTable = tomllib.load(f)
-            if "baseUrl" in tomlTable:
-                self.baseUrl = tomlTable["baseUrl"]
-            if "botToken" in tomlTable:
-                self.botToken = tomlTable["botToken"]
+            def readTomlValue(tomlvalueName, classmemberName):
+                if tomlvalueName in tomlTable:
+                    setattr(self, classmemberName, tomlTable[tomlvalueName])
+            readTomlValue("baseUrl", "baseUrl")
+            readTomlValue("botToken", "botToken")
             if "routerCredent" in tomlTable:
                 # if DEBUG: print(tomlTable["routerCredent"])
                 self.restapiUser, self.restapiPassword = tomlTable["routerCredent"]
@@ -158,7 +159,10 @@ class App:
             # result += f"{vio} aka \"{rec.name}\" wasted {rec.getSummMiB():.2f} MiB" + f" ({rec.traf[Dir.Tx]/1024/1024:.1f}|{rec.traf[Dir.Rx]/1024/1024:.1f})" + "\n"
             result += f"{rec.getSummMiB():.1f}Mb wasted by '{rec.name}'\n"
         return result
-    def report(self, period:Per, thresh:int, DoNotDisturb=False):
+    def report(self, period:Per|None, thresh:int|None, DoNotDisturb=False):
+        if not (period and thresh):
+            print("Error. Detail level and threshold value are necessary!")
+            sys.exit(1)
         app.restGetRecords(Dir.Rx, period.value)
         app.restGetRecords(Dir.Tx, period.value)
         app.summRecords()
@@ -225,12 +229,8 @@ if __name__ == "__main__":
         app.report(Per.OneDay, 900)
         sys.exit()
 
-    if conf.oneShotParamsReady():
-        app.report(conf.dtl, conf.thresh, conf.noDisturb or False)
-        sys.exit(0)
-    else:
-        print("Error. Detail level and threshold value are necessary!")
-        sys.exit(1)
+    app.report(conf.dtl, conf.thresh, conf.noDisturb or False)
+    sys.exit(0)
 
     # exCode:int = not ok
     # sys.exit(exCode) # exit with 0 if Ok
