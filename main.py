@@ -17,9 +17,9 @@ class Conf:
         self.botToken = ""
         self.restapiUser = ""
         self.restapiPassword = ""
-        self.dtl = None
-        self.thresh = None
-        self.noDisturb = None
+        self.dtl:Per|None = None
+        self.thresh:int|None = None
+        self.noDisturb:bool|None = None
         # self.dtl = Per.ThreeHour
         # self.thresh = 100
         # self.noDisturb = False
@@ -56,11 +56,11 @@ class Conf:
              print ("NO HELP! ha-ha")
              sys.exit()
           elif opt in ("-d", "--detail"):
-              self.dtl = arg
+              self.dtl = Per[arg]
           elif opt in ("-t", "--thresh"):
-              self.thresh = arg
+              self.thresh = int(arg)
           elif opt in ("-q", "--semi-quiet"):
-              self.thresh = True
+              self.noDisturb = True
 
     def getEnvValues(self):
         def getEnvParam(envName, classmemberName):
@@ -176,7 +176,7 @@ class App:
         # Get violators list as text
         msg = app.blameViolators(thresh)
         if DoNotDisturb and not msg:
-            print("no violators and donotDisturb, so DONT send message")
+            print("zero-violators and donotDisturb, so DONT send message")
             return
         if not msg:
             msg = "None"
