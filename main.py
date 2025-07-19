@@ -3,33 +3,38 @@
 import tomllib
 import requests
 import getopt
-import sys , os
+import sys, os
 from typing import Dict
 from enum import Enum
-# from datetime import datetime
 
-CONFIGFILE = "config.toml"
-CONFIGFILE2 = "secrets.toml"
+CONFIGFILE_COMMON = "config.toml"
+CONFIGFILE_SECRET = "secrets.toml"
 DEBUG = True
 
 class Conf:
     def __init__(self):
         self.baseUrl:str = ""
         self.botToken = ""
+        self.restapiUser = ""
+        self.restapiPassword = ""
     def eval(self):
-        conf.readToml(CONFIGFILE)
-        conf.readToml(CONFIGFILE2)
-        conf.getCliArgs(sys.argv[1:])
-        conf.getEnvValues()
+        self.readToml(CONFIGFILE_COMMON)
+        self.readToml(CONFIGFILE_SECRET)
+        self.getCliArgs(sys.argv[1:])
+        self.getEnvValues()
     def readToml(self, fname:str):
+        global DEBUG
         with open(fname, "rb") as f:
             tomlTable = tomllib.load(f)
             if "baseUrl" in tomlTable:
                 self.baseUrl = tomlTable["baseUrl"]
-            if "bot_token" in tomlTable:
-                self.botToken = tomlTable["bot_token"]
-            if "chat_id" in tomlTable:
-                self.chat_id = tomlTable["chat_id"]
+            if "botToken" in tomlTable:
+                self.botToken = tomlTable["botToken"]
+            if "routerCredent" in tomlTable:
+                # if DEBUG: print(tomlTable["routerCredent"])
+                self.restapiUser, self.restapiPassword = tomlTable["routerCredent"]
+            if "Debug" in tomlTable:
+                DEBUG = tomlTable["Debug"]
     def getCliArgs(self, argv):
        try:
           opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
@@ -88,7 +93,7 @@ class App:
     def restGetRecords(self, dir:Dir, dtl):
         fullUrl = f"{conf.baseUrl}?attribute={dir.value}&detail={dtl}"
         try:
-            response = requests.get(fullUrl, auth=('user', 'password'))
+            response = requests.get(fullUrl, auth=(conf.restapiUser, conf.restapiPassword))
         except requests.exceptions.ConnectionError:
             print("\nConnection to Keenetic failed! Network problem or server is down")
             return
@@ -135,7 +140,7 @@ class App:
         # Get violators list as text
         msg = app.blameViolators(thresh)
         if DoNotDisturb and not msg:
-            print("no violators and donotDisturb, so stay quiet")
+            print("no violators and donotDisturb, so DONT send message")
             return
         if not msg:
             msg = "None"
@@ -157,12 +162,12 @@ class Teleg:
             self.sendMessage(chat, msg)
     def getChatIds(self):
         url = f'https://api.telegram.org/bot{conf.botToken}/getUpdates'
-        response = requests.get(url).json()
-        if DEBUG: print(response)
-        for result in response['result']:
-            chat = result.get('message', {}).get('chat')
+        botState = requests.get(url).json()
+        if DEBUG: print("DEBUG:botState:", botState)
+        for result in botState["result"]:
+            chat = result.get("message", {}).get("chat")
             if chat:
-                self.chatIds.add(chat['id'])
+                self.chatIds.add(chat["id"])
     def sendMessage(self, chatID, message):
         url = f"https://api.telegram.org/bot{conf.botToken}/sendMessage"
         payload = {
