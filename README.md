@@ -19,6 +19,7 @@ config.toml:
 ```
 baseUrl = "http://192.168.0.1:88/rci/show/ip/hotspot/summary"
 Debug = false
+manualChats = [ "1001111111234", "1001111811234", "7891625487" ]
 ```
 
 secrets.toml:

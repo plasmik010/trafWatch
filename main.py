@@ -4,8 +4,9 @@ import tomllib
 import requests
 import getopt
 import sys, os
-from typing import Dict
+from typing import Dict, Set
 from enum import Enum
+import copy
 
 CONFIGFILE_COMMON = "config.toml"
 CONFIGFILE_SECRET = "secrets.toml"
@@ -17,6 +18,7 @@ class Conf:
         self.botToken = ""
         self.restapiUser = ""
         self.restapiPassword = ""
+        self.manualChats:Set[int] = set()
         self.dtl:Per|None = None
         self.thresh:int|None = None
         self.noDisturb:bool|None = None
@@ -43,6 +45,9 @@ class Conf:
             if "routerCredent" in tomlTable:
                 # if DEBUG: print(tomlTable["routerCredent"])
                 self.restapiUser, self.restapiPassword = tomlTable["routerCredent"]
+            if "manualChats" in tomlTable:
+                for chatID in tomlTable["manualChats"]:
+                    conf.manualChats.add(int(chatID))
             if "Debug" in tomlTable:
                 DEBUG = tomlTable["Debug"]
     def getCliArgs(self, argv):
@@ -130,7 +135,11 @@ class App:
         except requests.exceptions.ConnectionError:
             print("\nConnection to Keenetic failed! Network problem or server is down")
             return
-        j = response.json()
+        try:
+            j = response.json()
+        except requests.exceptions.JSONDecodeError:
+            print("\nError! Keenetic did not respond with proper json")
+            return
         # print(j["t"])
         self.records.clear()
         for host in j["host"]:
@@ -188,10 +197,13 @@ class App:
 
 class Teleg:
     def __init__(self):
-        self.chatIds = set()
+        self.chatIds:Set[int] = set()
+        self.reset()
         self.getChatIds()
     def clear(self):
         self.chatIds.clear()
+    def reset(self):
+        self.chatIds = copy.deepcopy(conf.manualChats)
     def sendMsgAll(self, msg):
         print(f"Gonna send msg to {len(self.chatIds)} chats")
         for chat in self.chatIds:
@@ -215,7 +227,7 @@ class Teleg:
         if response.status_code == 200:
             print("✅ Message sent successfully")
         else:
-            print(f"❌ Failed to send message: {response.status_code} - {response.text}")
+            print(f"❌ Failed to send message to chat:{chatID}: {response.status_code} - {response.text}")
 
 
 if __name__ == "__main__":
@@ -228,9 +240,8 @@ if __name__ == "__main__":
 
     teleg = Teleg()
 
-    if DEBUG: teleg.clear() # Prevent bot send message
-
     if DEBUG:
+        # teleg.clear() # Prevent bot send message
         app.report(Per.OneHour, 500, True)
         app.report(Per.ThreeHour, 300)
         app.report(Per.OneDay, 900)
