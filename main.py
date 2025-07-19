@@ -82,7 +82,14 @@ class Conf:
     def showAll(self):
         print("\nCurrent params:")
         for name, value in self.__dict__.items():
-            print(f"    {name} = {value}")
+            match name:
+                case "botToken" | "restapiPassword":
+                    if value == "":
+                        print(f"    {name} is empty")
+                    else:
+                        print(f"    {name} got")
+                case _:
+                    print(f"    {name} = {value}")
 
 class Dir(Enum):
     Rx = 'rxbytes'
@@ -137,7 +144,7 @@ class App:
         else:
             print("got special entry", j)
             # mac =  f"{j["type"]}_{trafRecord.incNonamers()}"
-            mac =  f"{j["type"]}"
+            mac =  f'{j["type"]}'
         t:trafRecord|None = self.records.get(mac)
         name = j.get("name") or j["type"]
         if not t:

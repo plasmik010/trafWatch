@@ -1,6 +1,7 @@
-
+config.toml
 secrets.toml
 
+*.swp
 build/
 build-*/
 bin/
