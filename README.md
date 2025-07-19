@@ -1,8 +1,16 @@
 
 # Possible call example:
 ```
+python main.py -d OneHour   -t 500  --semi-quiet
 python main.py -d ThreeHour -t 300
-python main.py -d OneHour -t 500 -q
+python main.py -d OneDay    -t 999
+```
+
+# CLI keys:
+```
+-q, --semi-quiet  - dont notify when zero violators
+-t, --threshold   - total traffic amount threshold to qualify as violation
+-d, --detail      - stats span, can be <OneHour|ThreeHour|OneDay>
 ```
 
 # Possible config files example:
