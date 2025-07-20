@@ -1,0 +1,10 @@
+[Unit]
+Description=Ежечасная проверка превышения потребления трафика
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=20m
+
+[Install]
+WantedBy=timers.target
