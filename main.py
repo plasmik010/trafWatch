@@ -22,9 +22,6 @@ class Conf:
         self.dtl:Per|None = None
         self.thresh:int|None = None
         self.noDisturb:bool|None = None
-        # self.dtl = Per.ThreeHour
-        # self.thresh = 100
-        # self.noDisturb = False
     def eval(self):
         # Every next input has higher merit
         self.readToml(CONFIGFILE_COMMON)
@@ -165,16 +162,11 @@ class App:
             rec.updSumm()
     def blameViolators(self, threshMiB:float):
         violators = []
-        result = ""
         for rec in self.records.values():
             val = rec.getSummMiB()
             if val > threshMiB:
-                violators.append(rec.mac)
-        for vio in violators:
-            rec = self.records[vio]
-            # result += f"{vio} aka \"{rec.name}\" wasted {rec.getSummMiB():.2f} MiB" + f" ({rec.traf[Dir.Tx]/1024/1024:.1f}|{rec.traf[Dir.Rx]/1024/1024:.1f})" + "\n"
-            result += f"{rec.getSummMiB():.1f}Mb wasted by '{rec.name}'\n"
-        return result
+                violators.append(f"{val:.1f}MiB wasted by '{rec.name}'")
+        return violators
     def report(self, period:Per|None, thresh:int|None, DoNotDisturb=False):
         if not (period and thresh):
             print("Error. Detail level and threshold value are necessary!")
@@ -183,14 +175,15 @@ class App:
         app.restGetRecords(Dir.Tx, period.value)
         app.summRecords()
         # Get violators list as text
-        msg = app.blameViolators(thresh)
-        if DoNotDisturb and not msg:
-            print("zero-violators and donotDisturb, so DONT send message")
+        violators = app.blameViolators(thresh)
+        if DoNotDisturb and len(violators) == 0:
+            print("zero-violators and DoNotDisturb, so don't send message")
             return
-        if not msg:
-            msg = "None"
+        if len(violators) == 0:
+            msg = f"The {thresh}MiB limit for {period.name} was not exceeded"
+        else:
+            msg = "\n".join([f"{period.name} violators [>{thresh}MiB]:"] + violators)
         # Add header line
-        msg = f"{period.name} violators [>{thresh}mb]:\n" + msg
         if DEBUG: print("DEBUG", msg)
         teleg.sendMsgAll(msg)
         print()
@@ -249,8 +242,3 @@ if __name__ == "__main__":
 
     app.report(conf.dtl, conf.thresh, conf.noDisturb or False)
     sys.exit(0)
-
-    # exCode:int = not ok
-    # sys.exit(exCode) # exit with 0 if Ok
-
-
