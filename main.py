@@ -10,7 +10,7 @@ import copy
 
 CONFIGFILE_COMMON = "config.toml"
 CONFIGFILE_SECRET = "secrets.toml"
-DEBUG = True
+DEBUG = False
 
 class Conf:
     def __init__(self):
@@ -18,7 +18,7 @@ class Conf:
         self.botToken = ""
         self.restapiUser = ""
         self.restapiPassword = ""
-        self.manualChats:Set[int] = set()
+        self.manualChats:Set[str] = set()
         self.dtl:Per|None = None
         self.thresh:int|None = None
         self.noDisturb:bool|None = None
@@ -47,14 +47,14 @@ class Conf:
                 self.restapiUser, self.restapiPassword = tomlTable["routerCredent"]
             if "manualChats" in tomlTable:
                 for chatID in tomlTable["manualChats"]:
-                    conf.manualChats.add(int(chatID))
+                    conf.manualChats.add(str(chatID))
             if "Debug" in tomlTable:
                 DEBUG = tomlTable["Debug"]
     def getCliArgs(self, argv):
        try:
           opts, args = getopt.getopt(argv, "hd:t:q", ["detail=", "thresh=", "semi-quiet"])
        except getopt.GetoptError:
-          print ('Bad invocation')
+          print ('Bad program invocation')
           sys.exit(2)
        for opt, arg in opts:
           if opt == '-h':
@@ -197,7 +197,7 @@ class App:
 
 class Teleg:
     def __init__(self):
-        self.chatIds:Set[int] = set()
+        self.chatIds:Set[str] = set()
         self.reset()
         self.getChatIds()
     def clear(self):
@@ -225,7 +225,7 @@ class Teleg:
         }
         response = requests.post(url, json=payload)
         if response.status_code == 200:
-            print("✅ Message sent successfully")
+            print(f"✅ Message sent successfully to chat {chatID}")
         else:
             print(f"❌ Failed to send message to chat:{chatID}: {response.status_code} - {response.text}")
 
