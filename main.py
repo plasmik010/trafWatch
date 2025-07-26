@@ -8,16 +8,19 @@ from typing import Dict, Set
 from enum import Enum
 import copy
 
+from keenetic_auth import KeenTalker
+
 CONFIGFILE_COMMON = "config.toml"
-CONFIGFILE_SECRET = "secrets.toml"
+#CONFIGFILE_SECRET = "secrets.toml"
 DEBUG = False
 
 class Conf:
     def __init__(self):
         self.baseUrl:str = ""
         self.botToken = ""
-        self.restapiUser = ""
-        self.restapiPassword = ""
+        self.keenLogin = ""
+        self.keenPassw = ""
+        self.doAuth = False # Для соединения c роутером по локальной сети - False 
         self.manualChats:Set[str] = set()
         self.dtl:Per|None = None
         self.thresh:int|None = None
@@ -25,31 +28,34 @@ class Conf:
     def eval(self):
         # Every next input has higher merit
         self.readToml(CONFIGFILE_COMMON)
-        self.readToml(CONFIGFILE_SECRET)
+        #self.readToml(CONFIGFILE_SECRET)
         self.getEnvValues()
         self.getCliArgs(sys.argv[1:])
     def oneShotParamsReady(self):
         return (self.dtl and self.thresh)
+    
     def readToml(self, fname:str):
         global DEBUG
         with open(fname, "rb") as f:
             tomlTable = tomllib.load(f)
-            def readTomlValue(tomlvalueName, classmemberName):
-                if tomlvalueName in tomlTable:
-                    setattr(self, classmemberName, tomlTable[tomlvalueName])
-            readTomlValue("baseUrl", "baseUrl")
-            readTomlValue("botToken", "botToken")
-            if "routerCredent" in tomlTable:
-                # if DEBUG: print(tomlTable["routerCredent"])
-                self.restapiUser, self.restapiPassword = tomlTable["routerCredent"]
-            if "manualChats" in tomlTable:
-                for chatID in tomlTable["manualChats"]:
+            def readTomlValue(tomlChapter, tomlvalueName, classmemberName):
+                if tomlvalueName in tomlTable[tomlChapter]:
+                    setattr(self, classmemberName, tomlTable[tomlChapter][tomlvalueName])
+            readTomlValue("Router", "baseUrl", "baseUrl")
+            readTomlValue("Router", "doAuth", "doAuth")
+            readTomlValue("Telega", "botToken", "botToken")
+            if "credent" in tomlTable["Router"]:
+                self.keenLogin, self.keenPassw = tomlTable["Router"]["credent"]
+            if "manualChats" in tomlTable["Telega"]:
+                for chatID in tomlTable["Telega"]["manualChats"]:
                     conf.manualChats.add(str(chatID))
-            if "Debug" in tomlTable:
-                DEBUG = tomlTable["Debug"]
+            if "Debug" in tomlTable["General"]:
+                DEBUG = tomlTable["General"]["Debug"]
+
     def getCliArgs(self, argv):
+       global DEBUG
        try:
-          opts, args = getopt.getopt(argv, "hd:t:q", ["detail=", "thresh=", "semi-quiet"])
+          opts, args = getopt.getopt(argv, "hd:t:q", ["detail=", "thresh=", "semi-quiet", "debug", "no-debug"])
        except getopt.GetoptError:
           print ('Bad program invocation')
           sys.exit(2)
@@ -63,6 +69,10 @@ class Conf:
               self.thresh = int(arg)
           elif opt in ("-q", "--semi-quiet"):
               self.noDisturb = True
+          elif opt in ("--debug"):
+              DEBUG = True
+          elif opt in ("-q", "--no-debug"):
+              DEBUG = False
 
     def getEnvValues(self):
         def getEnvParam(envName, classmemberName):
@@ -76,22 +86,20 @@ class Conf:
                 return 1
             return 0
         getEnvParam("trafWatchBaseUrl", "baseUrl")
-        getEnvParam("restUser", "restapiUser")
-        getEnvParam("restPassword", "restapiPassword")
+        getEnvParam("keenLogin", "keenLogin")
+        getEnvParam("keenPassw", "keenPassw")
         getEnvParam("botToken", "botToken")
-        # e = os.environ.get("trafWatchBaseUrl", None)
-        # if e: self.baseUrl = e
+
     def showAll(self):
         print("\nCurrent params:")
         for name, value in self.__dict__.items():
-            match name:
-                case "botToken" | "restapiPassword":
-                    if value == "":
-                        print(f"    {name} is empty")
-                    else:
-                        print(f"    {name} got")
-                case _:
-                    print(f"    {name} = {value}")
+            if name in ["keenPassw", "botToken"]:
+                if value != "":
+                    print(f"    {name} is empty")
+                else:
+                    print(f"    {name} has value")
+            else:
+                print(f"    {name} = {value}")
 
 class Dir(Enum):
     Rx = 'rxbytes'
@@ -126,9 +134,11 @@ class App:
     def clear(self):
         self.records.clear()
     def restGetRecords(self, dir:Dir, dtl):
-        fullUrl = f"{conf.baseUrl}?attribute={dir.value}&detail={dtl}"
+        query = f"rci/show/ip/hotspot/summary?attribute={dir.value}&detail={dtl}"
         try:
-            response = requests.get(fullUrl, auth=(conf.restapiUser, conf.restapiPassword))
+            #keen.maybeAuth()
+            response = keen.request(query);
+            if DEBUG: print(response.text)
         except requests.exceptions.ConnectionError:
             print("\nConnection to Keenetic failed! Network problem or server is down")
             return
@@ -136,11 +146,13 @@ class App:
             j = response.json()
         except requests.exceptions.JSONDecodeError:
             print("\nError! Keenetic did not respond with proper json")
+            print(response)
             return
         # print(j["t"])
         self.records.clear()
         for host in j["host"]:
             self.collectJsonRecord(host, dir)
+
     def collectJsonRecord(self, j, dir:Dir):
         amount = j[dir.value]
         if amount==0:
@@ -180,7 +192,8 @@ class App:
             print("zero-violators and DoNotDisturb, so don't send message")
             return
         if len(violators) == 0:
-            msg = f"The {thresh}MiB limit for {period.name} was not exceeded"
+            # msg = f"Zero violators of {thresh}MiB limit for {period.name}"
+            msg = f"{period.name} violators [>{thresh}MiB]: \n😇 Nobody 😇"
         else:
             msg = "\n".join([f"{period.name} violators [>{thresh}MiB]:"] + violators)
         # Add header line
@@ -209,12 +222,12 @@ class Teleg:
             chat = result.get("message", {}).get("chat")
             if chat:
                 self.chatIds.add(chat["id"])
+        print(f"Now have list of {len(self.chatIds)} chats")
     def sendMessage(self, chatID, message):
         url = f"https://api.telegram.org/bot{conf.botToken}/sendMessage"
         payload = {
             "chat_id": chatID,
             "text": message,
-            # "parse_mode": "Markdown"
         }
         response = requests.post(url, json=payload)
         if response.status_code == 200:
@@ -231,13 +244,14 @@ if __name__ == "__main__":
 
     app = App()
 
+    keen = KeenTalker((conf.keenLogin, conf.keenPassw), conf.baseUrl, conf.doAuth)
     teleg = Teleg()
 
     if DEBUG:
         # teleg.clear() # Prevent bot send message
-        app.report(Per.OneHour, 500, True)
+        app.report(Per.OneHour, 200, True)
         app.report(Per.ThreeHour, 300)
-        app.report(Per.OneDay, 900)
+        app.report(Per.OneDay, 300)
         sys.exit()
 
     app.report(conf.dtl, conf.thresh, conf.noDisturb or False)

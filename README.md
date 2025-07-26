@@ -3,7 +3,7 @@
 ```
 python main.py -d OneHour   -t 500  --semi-quiet
 python main.py -d ThreeHour -t 300
-python main.py -d OneDay    -t 999
+python main.py -d OneDay    -t 900
 ```
 
 # CLI keys:
