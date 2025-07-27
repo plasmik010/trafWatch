@@ -1,0 +1,18 @@
+[Unit]
+Description=Определение потребителей трафика за час
+
+[Service]
+Type=oneshot
+User=proger
+WorkingDirectory=/home/proger/insomnia/trafWatch
+ExecStart=/usr/bin/python main.py -d OneHour -t 100 --semi-quiet
+Restart=on-failure
+RestartSec=4min
+StartLimitBurst=3
+StartLimitInterval=1200
+
+; ExecStart=/usr/bin/docker run \
+;   --rm \
+;   trafwatch:latest \
+;     -q --detail OneHour --thresh 100
+

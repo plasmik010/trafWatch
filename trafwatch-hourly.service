@@ -1,8 +1,0 @@
-[Unit]
-Description=Определение потребителей трафика за час
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/docker run \
-  --rm \
-  trafwatch:latest \
-    -q --detail OneHour --thresh 100

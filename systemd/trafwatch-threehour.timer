@@ -1,0 +1,10 @@
+[Unit]
+Description=Раз в пару часов проверка превышения потребления трафика
+
+[Timer]
+# Runs at 00:10, 02:10, 04:10, etc. (top of every even hour)
+OnCalendar=*-*-* 0/2:10:00
+# If system was off during the scheduled time, run ASAP after boot
+Persistent=true
+; RandomizedDelaySec=1m
+

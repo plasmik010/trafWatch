@@ -1,0 +1,13 @@
+[Unit]
+Description=Определение потребителей трафика за день
+
+[Service]
+Type=oneshot
+User=proger
+WorkingDirectory=/home/proger/insomnia/trafWatch
+ExecStart=/usr/bin/python main.py -d OneDay -t 200
+Restart=on-failure
+RestartSec=4min
+; StartLimitBurst=3
+; StartLimitInterval=1200
+

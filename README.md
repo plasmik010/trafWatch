@@ -17,13 +17,16 @@ python main.py -d OneDay    -t 900
 
 config.toml:
 ```
-baseUrl = "http://192.168.0.1:88/rci/show/ip/hotspot/summary"
+[General]
 Debug = false
-manualChats = [ "1001111111234", "1001111811234", "7891625487" ]
-```
 
-secrets.toml:
-```
-botToken = "999999999:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-routerCredent = ["rest-api-user", "rest-api-password"]
+[Telega]
+botToken = "7502347503:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+manualChats = [ "-1001111111234", "-1001111811234", "7891625487" ]
+
+[Router]
+baseUrl = "https://stats.box.org"
+credent = ["user", "pass"]
+doAuth = true # for internet connect
+
 ```

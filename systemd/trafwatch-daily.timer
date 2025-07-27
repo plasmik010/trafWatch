@@ -1,0 +1,10 @@
+[Unit]
+Description=Ежедневная проверка превышения потребления трафика
+
+[Timer]
+# Run at 23:30:00 every day
+OnCalendar=*-*-* 23:30:00
+# If system was off during the scheduled time, run ASAP after boot
+Persistent=true
+RandomizedDelaySec=1m
+

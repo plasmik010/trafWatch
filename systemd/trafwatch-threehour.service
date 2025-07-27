@@ -1,0 +1,13 @@
+[Unit]
+Description=Определение потребителей трафика за три часа
+
+[Service]
+Type=oneshot
+User=proger
+WorkingDirectory=/home/proger/insomnia/trafWatch
+ExecStart=/usr/bin/python main.py -d ThreeHour -t 150
+Restart=on-failure
+RestartSec=4min
+StartLimitBurst=3
+StartLimitInterval=1200
+
