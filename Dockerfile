@@ -6,6 +6,7 @@ RUN apt-get install -y cron
 
 # Copy everything
 COPY app/ /app/
+COPY config.toml /app/config.toml
 COPY crontab /etc/cron.d/trafwatch
 COPY run.sh /app/run.sh
 

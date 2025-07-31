@@ -8,9 +8,9 @@ python main.py -d OneDay    -t 900
 
 # CLI ключи:
 ```
--q, --semi-quiet  - dont notify when zero violators
--t, --threshold   - total traffic amount threshold to qualify as violation
--d, --detail      - stats span, can be <OneHour|ThreeHour|OneDay>
+-q, --semi-quiet  - не рассылать оповещение если порог не превышен
+-t, --threshold   - порог суммы входящего и исходящего трафика на потребителя
+-d, --detail      - окно сбора статистики трафика, может быть <OneHour|ThreeHour|OneDay>
 ```
 
 # Пример конфига:
@@ -27,9 +27,16 @@ manualChats = [ "-1001111111234", "-1001111811234", "7891625487" ]
 [Router]
 baseUrl = "https://stats.box.org"
 credent = ["user", "pass"]
-doAuth = true # for internet connect
+doAuth = true # это было надо если роутер не в локальной сети
 
 ```
+
+# Телега:
+- создать бота
+- создать канал, добавить бота в админы
+- узнать токен бота
+- узнать ид канала
+- вписать в конфиг
 
 # Запуск по таймеру в systemd:
 ```
@@ -47,14 +54,16 @@ systemctl --user restart trafwatch-daily.timer
 docker build --network host  -t trafwatch -f Dockerfile .
 
 # запустить контейнер
-docker run --name myTrafWatcher trafwatch
+docker run --network host --name myTrafWatcher trafwatch
 
 # запустить контейнер с подменой конфига и crontab
-docker run  -v $(pwd)/crontab:/etc/cron.d/trafwatch -v $(pwd)/app/config.toml:/app/config.toml  --name myTrafWatcher trafwatch
+docker run --network host -v $(pwd)/crontab:/etc/cron.d/trafwatch -v $(pwd)/app/config.toml:/app/config.toml  --name myTrafWatcher trafwatch
 
 # стандартные команды докера
 docker exec -it myTrafWatcher  cat /var/log/cron.log
 docker ps
 docker stop myTrafWatcher
 ```
+возможно вам не потребуется ```--network host```
+
 
