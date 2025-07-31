@@ -62,7 +62,7 @@ class Conf:
        for opt, arg in opts:
           if opt == '-h':
              print ("NO HELP! ha-ha")
-             sys.exit()
+             sys.exit(2)
           elif opt in ("-d", "--detail"):
               self.dtl = Per[arg]
           elif opt in ("-t", "--thresh"):
@@ -136,7 +136,6 @@ class App:
     def restGetRecords(self, dir:Dir, dtl):
         query = f"rci/show/ip/hotspot/summary?attribute={dir.value}&detail={dtl}"
         try:
-            #keen.maybeAuth()
             response = keen.request(query);
             if DEBUG: print(response.text)
         except requests.exceptions.ConnectionError:
@@ -148,7 +147,6 @@ class App:
             print("\nError! Keenetic did not respond with proper json")
             print(response)
             return
-        # print(j["t"])
         self.records.clear()
         for host in j["host"]:
             self.collectJsonRecord(host, dir)
@@ -252,7 +250,8 @@ if __name__ == "__main__":
         app.report(Per.OneHour, 200, True)
         app.report(Per.ThreeHour, 300)
         app.report(Per.OneDay, 300)
-        sys.exit()
+        sys.exit(0)
 
     app.report(conf.dtl, conf.thresh, conf.noDisturb or False)
     sys.exit(0)
+

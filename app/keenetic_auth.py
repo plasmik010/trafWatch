@@ -14,10 +14,11 @@ passw = pas
 import configparser
 import requests
 import hashlib
+import sys
 
 def onAuthFail():
     print("Keenetic Auth failed. Exiting.")
-    quit()
+    sys.exit(1)
 
 class KeenTalker:
     def __init__(self, credentials, baseUrl:str, needAuth:bool = True):

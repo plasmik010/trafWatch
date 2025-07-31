@@ -1,7 +1,8 @@
 FROM python:3.11-slim
 # FROM python:alpine AS builder
 
-RUN apt-get update && apt-get install -y cron
+RUN apt-get update
+RUN apt-get install -y cron
 
 # Copy everything
 COPY app/ /app/

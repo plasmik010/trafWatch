@@ -3,8 +3,7 @@ Description=Определение потребителей трафика за 
 
 [Service]
 Type=oneshot
-User=proger
-WorkingDirectory=/home/proger/insomnia/trafWatch
+WorkingDirectory=/opt/trafWatch
 ExecStart=/usr/bin/python main.py -d ThreeHour -t 150
 Restart=on-failure
 RestartSec=4min
