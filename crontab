@@ -1,0 +1,12 @@
+# Daily at 23:30
+30 23 * * * /app/run.sh OneDay 200 >> /var/log/cron.log 2>&1
+
+# Hourly at HH:01
+1 * * * * /app/run.sh OneHour 100 --semi-quiet >> /var/log/cron.log 2>&1
+
+# Every 2 hours at HH:10 (00:10, 02:10, etc.)
+5 */2 * * * /app/run.sh ThreeHour 120 >> /var/log/cron.log 2>&1
+
+
+# */1 * * * * echo "another minute passed" >> /var/log/cron.log
+

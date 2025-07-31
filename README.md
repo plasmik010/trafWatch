@@ -30,3 +30,7 @@ credent = ["user", "pass"]
 doAuth = true # for internet connect
 
 ```
+
+# Docker
+## run with newer configs ## docker run  -v $(pwd)/crontab:/etc/cron.d/trafwatch -v $(pwd)/app/config.toml:/app/config.toml  trafwatch 
+
