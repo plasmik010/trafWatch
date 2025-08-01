@@ -11,7 +11,6 @@ import copy
 from keenetic_auth import KeenTalker
 
 CONFIGFILE_COMMON = "config.toml"
-#CONFIGFILE_SECRET = "secrets.toml"
 DEBUG = False
 
 class Conf:
@@ -147,7 +146,6 @@ class App:
             print("\nError! Keenetic did not respond with proper json")
             print(response)
             return
-        self.records.clear()
         for host in j["host"]:
             self.collectJsonRecord(host, dir)
 
