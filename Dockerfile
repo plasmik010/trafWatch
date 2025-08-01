@@ -1,6 +1,10 @@
 FROM python:3.11-slim
 # FROM python:alpine AS builder
 
+# Install tzdata (non-interactive)
+ENV TZ=Europe/Moscow
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN apt-get update
 RUN apt-get install -y cron
 

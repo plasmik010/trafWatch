@@ -1,3 +1,5 @@
+# Описание
+## Программа призвана получить с REST-морды роутера Keenetic статистику по потреблению трафика клиентами. В случае высоких показателей отправлять отчеты в телеграм-канал.
 
 # Примеры вызова:
 ```
@@ -9,14 +11,14 @@ python main.py -d OneDay    -t 900
 # CLI ключи:
 ```
 -q, --semi-quiet  - не рассылать оповещение если порог не превышен
--t, --threshold   - порог суммы входящего и исходящего трафика на потребителя
+-t, --threshold   - порог суммы входящего и исходящего трафика для потребителя
 -d, --detail      - окно сбора статистики трафика, может быть <OneHour|ThreeHour|OneDay>
 ```
 
 # Пример конфига:
-
-config.toml:
 ```
+config.toml:
+------------
 [General]
 Debug = false
 
@@ -28,7 +30,6 @@ manualChats = [ "-1001111111234", "-1001111811234", "7891625487" ]
 baseUrl = "https://stats.box.org"
 credent = ["user", "pass"]
 doAuth = true # это было надо если роутер не в локальной сети
-
 ```
 
 # Телега:
@@ -54,7 +55,7 @@ systemctl --user restart trafwatch-daily.timer
 docker build --network host  -t trafwatch -f Dockerfile .
 
 # запустить контейнер
-docker run --network host --name myTrafWatcher trafwatch
+docker run -d --network host --name myTrafWatcher trafwatch
 
 # запустить контейнер с подменой конфига и crontab
 docker run --network host -v $(pwd)/crontab:/etc/cron.d/trafwatch -v $(pwd)/app/config.toml:/app/config.toml  --name myTrafWatcher trafwatch
@@ -65,5 +66,4 @@ docker ps
 docker stop myTrafWatcher
 ```
 возможно вам не потребуется ```--network host```
-
 
