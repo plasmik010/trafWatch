@@ -110,6 +110,14 @@ class Per(Enum):
     ThreeHour = "2"
     OneDay = "3"
 
+def per2emoji(period:Per):
+    if period==Per.OneHour:
+        return "🚀"
+    if period==Per.ThreeHour:
+        return "💸"
+    if period==Per.OneDay:
+        return "🌙"
+
 class trafRecord:
     nonamers_cnt:int = 0
     def __init__(self, mac:str, name:str):
@@ -187,11 +195,13 @@ class App:
         if DoNotDisturb and len(violators) == 0:
             print("zero-violators and DoNotDisturb, so don't send message")
             return
+        msg = f"{period.name} violators [>{thresh}MiB]: \n"
+        msg = per2emoji(period) + "\n" + msg
         if len(violators) == 0:
             # msg = f"Zero violators of {thresh}MiB limit for {period.name}"
-            msg = f"{period.name} violators [>{thresh}MiB]: \n😇 Nobody 😇"
+            msg += "nobody 😇"
         else:
-            msg = "\n".join([f"{period.name} violators [>{thresh}MiB]:"] + violators)
+            msg += "\n".join(violators)
         # Add header line
         if DEBUG: print("DEBUG", msg)
         teleg.sendMsgAll(msg)

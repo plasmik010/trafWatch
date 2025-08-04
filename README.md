@@ -58,7 +58,7 @@ docker build --network host  -t trafwatch -f Dockerfile .
 docker run -d --network host --name myTrafWatcher trafwatch
 
 # запустить контейнер с подменой конфига и crontab
-docker run --network host -v $(pwd)/crontab:/etc/cron.d/trafwatch -v $(pwd)/app/config.toml:/app/config.toml  --name myTrafWatcher trafwatch
+docker run --network host -v $(pwd)/crontab:/etc/cron.d/trafwatch -v $(pwd)/config.toml:/app/config.toml  --name myTrafWatcher trafwatch
 
 # стандартные команды докера
 docker exec -it myTrafWatcher  cat /var/log/cron.log
